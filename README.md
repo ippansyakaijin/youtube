@@ -1,2 +1,2 @@
 # youtube
-youtubeで使ったネタの格納庫
+youtubeで使ったスクリプトの格納庫
