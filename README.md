@@ -1,8 +1,8 @@
 # youtube
-youtubeで使ったスクリプトの格納庫
-初めてGitHub使ったけどこれであってるのか…？
-
-
+youtubeで使ったスクリプトの格納庫<br>
+初めてGitHub使ったけどこれであってるのか…？<br>
+<br>
+<br>
 チャンネルIDから動画一覧を取得するスクリプト
 ```
 function myFunction() {
@@ -72,7 +72,7 @@ function myFunction() {
 
 }
 ```
-
+<br>
 
 動画IDから動画一覧を取得するスクリプト
 ```
