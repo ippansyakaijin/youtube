@@ -1,8 +1,9 @@
-## youtube
+# youtube
 youtubeで使ったスクリプトの格納庫
+初めてGitHub使ったけどこれであってるのか…？
 
 
-# チャンネルIDから動画一覧を取得するスクリプト
+## チャンネルIDから動画一覧を取得するスクリプト
 ```
 function myFunction() {
 
