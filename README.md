@@ -11,7 +11,7 @@ function myFunction() {
   // 調べたいチャンネルID
   const channelId = 'CHANNEL_ID'; 
   // 取得する動画の最大値（大きすぎる値はタイムアウトになります）
-  const limit = 2;
+  const limit = 100;
   // ===============================================
 
 
