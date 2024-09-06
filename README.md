@@ -43,12 +43,11 @@ function myFunction() {
 
       // 動画情報取得
       let videoId = pl.snippet.resourceId.videoId;
-      videoId = '7ljvcWyYeSE';
       let video = YouTube.Videos.list(videoPart, {'id': videoId});
       let videoItem = video.items[0];
 
       // 出力用変数
-      let thumbnailUrl = videoItem.snippet.thumbnails.maxres.url;
+      let thumbnailUrl = videoItem.snippet.thumbnails.default.url;
       let videoTitle = pl.snippet.title;
       let videoPrivacy = videoItem.status.privacyStatus;
       let videoDate = videoItem.snippet.publishedAt;
