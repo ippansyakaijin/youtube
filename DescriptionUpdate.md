@@ -46,6 +46,7 @@ function getVideosFromPlaylist(){
   const playListId = inputPlaylistID_();  
   let array = [];
   // プレイリストに含まれる動画を配列に格納
+  addTableIndexName_(array);
   extractVideosToArray_(playListId, array);  
   // 配列に動画の情報が入っていなければ中断
   if(array.length < 2) return;
@@ -133,50 +134,140 @@ function outputArrayToVideosListSheet_(table){
 }
 
 // 動画を抽出して配列に格納する
-function extractVideosToArray_(id, table){
-  table.push(['id', 'サムネurl', 'title', '公開設定', '日付', '再生数', 'コメント', 'いいね', '時間', '概要']);
-
+function extractVideosToArray_(id, table){  
   let playListItems = '';
   let nextPageToken = '';
   
   do{
-    // プレイリスト取得
-    try{
-       playListItems = YouTube.PlaylistItems.list(PLAYLISTPART, {'playlistId': id, 'maxResults': 10, 'pageToken': nextPageToken});
-    }catch(e){
-      notFoundPlayList_();
-      Logger.log('error: ' + e);
-      break;
-    }
+    playListItems = getPlaylist_(id, nextPageToken);
+    if(checkEmptyPlaylist_(playListItems)) break;
 
     for(const pl of playListItems.items){
-
-      // 動画情報取得
-      let videoId = pl.snippet.resourceId.videoId;
-      let video = YouTube.Videos.list(VIDEOPART, {'id': videoId});
-      let videoItem = video.items[0];
-
-      // 出力用変数
-      let thumbnailUrl = videoItem.snippet.thumbnails.default.url;
-      let videoTitle = pl.snippet.title;
-      let videoPrivacy = videoItem.status.privacyStatus;
-      let videoDate = videoItem.snippet.publishedAt;
-      let videoCount = videoItem.statistics.viewCount;
-      let videoComment = videoItem.statistics.commentCount;
-      let videoLike = videoItem.statistics.likeCount;
-      let videoTime = videoItem.contentDetails.duration;
-      let videoDescription = videoItem.snippet.description;
-
-      Logger.log('No ' + table.length + ':' + videoTitle);
-
-      // 配列に追加
-      table.push([videoId, thumbnailUrl, videoTitle, videoPrivacy, videoDate, videoCount, videoComment, videoLike, videoTime, videoDescription]);
+      // 動画情報
+      addTableVideoInfo_(pl, table);
     }
-    // 
     nextPageToken = playListItems.nextPageToken || '';
 
   }while(nextPageToken && UPDATE_LIMIT > table.length);
+}
 
+// 動画のインデックス名を設定する
+function addTableIndexName_(table){
+  table.push(['id', 'サムネurl', 'title', '公開設定', '日付', '再生数', 'コメント', 'いいね', '時間', '概要']);
+}
+
+// 動画の情報を取得して配列に追加する
+function addTableVideoInfo_(playlistItem, table){  
+  // 動画情報取得
+  let videoItem = getVideoItem_(getVideoId_(playlistItem));
+
+  let items = [];
+  items[0] = getVideoId_(playlistItem);
+  items[1] = getVideoThumbnailUrl_(videoItem);
+  items[2] = getVideoTitle_(videoItem);
+  items[3] = getVideoPrivacy_(videoItem);
+  items[4] = getVideoDate_(videoItem);
+  items[5] = getVideoViewCount_(videoItem);
+  items[6] = getVideoCommentCount_(videoItem);
+  items[7] = getVideoLikes_(videoItem);
+  items[8] = getVideoTime_(videoItem);
+  items[9] = getVideoDescription_(videoItem);
+  Logger.log('No ' + table.length + ':' + getVideoTitle_(videoItem));
+
+  table.push(items);
+}
+
+// プレイリストが無ければtrueを返す
+function checkEmptyPlaylist_(pl){
+  if(!pl){
+    Logger.log('> 指定したplaylistが見つかりませんでした');
+    return true;
+  }
+  return false;
+}
+
+// プレイリスト取得
+function getPlaylist_(id, token){
+  return YouTube.PlaylistItems.list(PLAYLISTPART, {'playlistId': id, 'maxResults': 10, 'pageToken': token});
+}
+
+// 動画のID取得
+function getVideoId_(playlistItem){
+  return playlistItem.snippet.resourceId.videoId;
+}
+
+// 動画のサムネイルURL取得
+function getVideoThumbnailUrl_(videoItem){
+  return videoItem.snippet.thumbnails.default.url;
+}
+
+// 動画のタイトル取得
+function getVideoTitle_(playlistItem){
+  return playlistItem.snippet.title;
+}
+
+// 動画の公開範囲取得
+function getVideoPrivacy_(videoItem){
+  return videoItem.status.privacyStatus;
+}
+
+// 動画の日付取得
+function getVideoDate_(videoItem){
+  return convertISO8601ToDate_(videoItem.snippet.publishedAt);
+}
+
+// 動画の再生数取得
+function getVideoViewCount_(videoItem){
+  return videoItem.statistics.viewCount;
+}
+
+// 動画のコメント数取得
+function getVideoCommentCount_(videoItem){
+  return videoItem.statistics.commentCount;
+}
+
+// 動画のいいね数取得
+function getVideoLikes_(videoItem){
+  return videoItem.statistics.likeCount;
+}
+
+// 動画の再生時間取得
+function getVideoTime_(videoItem){
+  return convertISO8601ToTime_(videoItem.contentDetails.duration);
+}
+
+// 動画の説明文取得
+function getVideoDescription_(videoItem){
+  return videoItem.snippet.description;
+}
+
+// 再生時間をISO8601からhh:mm:ssに変換する
+function convertISO8601ToTime_(iso8601){
+
+  let matches = iso8601.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+
+  let hours = isTimeFromISO8601_(matches[1]);
+  let minutes = isTimeFromISO8601_(matches[2]);
+  let seconds = isTimeFromISO8601_(matches[3]);
+
+  return [hours, minutes, seconds].join(':');
+}
+
+// 時間部分を抽出。なければ0を返す
+function isTimeFromISO8601_(time){
+  if(time){
+    return parseInt(time, 10).toString().padStart(2, '0');
+  }
+  return 0;
+}
+
+// アップデートの日付を変換
+function convertISO8601ToDate_(iso8601){
+  let list = iso8601.split(/[-T:Z]/);
+  let date = [list[0], list[1], list[2]].join('/');
+  let time = [list[3], list[4], list[5]].join(':'); 
+
+  return date + ' ' + time;
 }
 
 // 開始位置定型文の取得
@@ -364,6 +455,8 @@ function checkUpdateVideoLimit_(numRows){
   }
   return false;
 }
+
+
 
 
 ```
